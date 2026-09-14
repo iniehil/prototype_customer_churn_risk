@@ -14,24 +14,60 @@ import numpy as np
 # Title of the app
 st.title("Who is likely to chrun - and when?")
 
-# Instructions of the app
-st.markdown("Upload all required reports.")
+# Cached function to read CSVs
+@st.cache_data(show_spinner="Parsing uploaded data...")
+def load_csv_file(uploaded_file):
+    if uploaded_file is None:
+        return None
+    return pd.read_csv(uploaded_file)
 
-# Upload Salesforce report
-sf_file = st.sidebar.file_uploader("Upload the Salesforce Report", type=["csv"])
-df_sf = pd.read_csv(sf_file)
+# Sidebar section for file inputs
+st.sidebar.header("Data Import")
+st.sidebar.markdown("Upload all 4 CSV files to run analysis.")
 
-# Upload Omni report
-omni_file = st.sidebar.file_uploader("Upload the Omni Report", type=["csv"])
-df_omni = pd.read_csv(omni_file)
+sf_file = st.sidebar.file_uploader("1. Salesforce Data", type=["csv"])
+omni_file = st.sidebar.file_uploader("2. Omni Data", type=["csv"])
+pendo_file = st.sidebar.file_uploader("3. Pendo Data", type=["csv"])
+zendesk_file = st.sidebar.file_uploader("4. Zendesk Support Data", type=["csv"])
 
-# Upload Pendo report
-pendo_file = st.sidebar.file_uploader("Upload the Pendo Report", type=["csv"])
-df_pendo = pd.read_csv(pendo_file)
+# Load files into cache
+df_sf = load_csv_file(sf_file)
+df_omni = load_csv_file(omni_file)
+df_pendo = load_csv_file(pendo_file)
+df_zendesk = load_csv_file(zendesk_file)
 
-# Upload Zendesk report
-zendesk_file = st.sidebar.file_uploader("Upload the Zendesk Report", type=["csv"])
-df_zendesk = pd.read_csv(zendesk_file)
+# Main Page Area
+if loaded_count == 4:
+    st.success("All 4 data sources loaded successfully!")
+
+    # Display preview in main window
+    tab1, tab2, tab3, tab4 = st.tabs(["Salesforce", "Omni", "Pendo", "Support"])
+    
+    with tab1:
+        st.subheader("Salesforce Data Preview")
+        st.dataframe(df_sf.head())
+
+    with tab2:
+        st.subheader("Omni Data Preview")
+        st.dataframe(df_omni.head())
+
+    with tab3:
+        st.subheader("Pendo Data Preview")
+        st.dataframe(df_pendo.head())
+
+    with tab4:
+        st.subheader("Support Ticket Data Preview")
+        st.dataframe(df_zendesk.head())
+
+else:
+    st.info(f"Please upload all 4 files using the sidebar to begin analysis. ({loaded_count}/4 loaded)")
+
+    # Show status list in main view 
+    st.markdown("### Missing Datasets:")
+    st.markdown(f"- **Salesforce Data:** {'Ready' if df_sf is not None else 'Pending upload'}")
+    st.markdown(f"- **Usage Data:** {'Ready' if df_omni is not None else 'Pending upload'}")
+    st.markdown(f"- **Support Data:** {'Ready' if df_pendo is not None else 'Pending upload'}")
+    st.markdown(f"- **Billing Data:** {'Ready' if df_zendesk is not None else 'Pending upload'}")
 
 # Merge all input files on account ID
 df = pd.merge(df_sf, df_omni, on='customer_id', how='outer')
