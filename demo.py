@@ -73,29 +73,56 @@ else:
     st.markdown(f"- **Support Data:** {'Ready' if df_pendo is not None else 'Pending upload'}")
     st.markdown(f"- **Billing Data:** {'Ready' if df_zendesk is not None else 'Pending upload'}")
 
-# Merge all input files on account ID
-df = pd.merge(df_sf, df_omni, on='customer_id', how='outer')
-df = pd.merge(df, df_pendo, on='customer_id', how='outer')
-df = pd.merge(df, df_zendesk, on='customer_id', how='outer')
+# Ensures that all dataframes exist before processing
+if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
 
-def generate_risk_score(df):
-  if df['days_to_renewal'] <= 30 and df['usage_change_90d_pct'] <= -25.0:
-    df['risk_score'] = 'High';
-  elif df['days_to_renewal'] <= 90 and df['usage_change_90d_pct'] <= 5.0:
-    df['risk_score'] = 'Medium';
-  else:
-    df['risk_score'] = 'Low'
+    # Standardize 'customer_id' across all datasets
+    dfs = [df_sf, df_omni, df_pendo, df_zendesk]
+    for dataset in dfs:
+        if 'customer_id' in dataset.columns:
+            dataset['customer_id'] = dataset['customer_id'].astype(str).str.strip().str.upper()
 
-  return df
+    # Sequential Outer Merge
+    df = df_sf.merge(df_omni, on='customer_id', how='outer') \
+              .merge(df_pendo, on='customer_id', how='outer') \
+              .merge(df_zendesk, on='customer_id', how='outer')
 
-# Display dataframe
-config = {
-    "customer_id": st.column_config.TextColumn("Customer ID", width="medium"),
-    "customer_name": st.column_config.TextColumn("Customer Name", width="medium"),
-    "renewal_date": st.column_config.DateColumn("Renewal Date", format="MMM, DD YYYY"),
-    "days_to_renewal": st.column_config.NumberColumn("Days to Renewal"),
-    "annual_revenue": st.column_config.NumberColumn("Annual Revenue ($)"),
-    "risk_score": st.column_config.NumberColumn("Risk Score")
-}
+    # Vectorized Risk Score Calculation
+    conditions = [
+        (df['days_to_renewal'] <= 30) & (df['usage_change_90d_pct'] <= -25.0),
+        (df['days_to_renewal'] <= 90) & (df['usage_change_90d_pct'] <= 5.0)
+    ]
+    levels = ['High', 'Medium']
+    
+    # Assigns 'Low' as default if neither condition above is met
+    df['risk_score'] = np.select(conditions, levels, default='Low')
 
-st.dataframe(data=df, width='stretch', column_config=config)
+    # 4. Filter only specific columns to display on screen
+    display_columns = [
+        "customer_id", 
+        "customer_name", 
+        "renewal_date", 
+        "days_to_renewal", 
+        "annual_revenue", 
+        "risk_score"
+    ]
+    
+    # Keep only columns that exist in the merged dataframe
+    final_cols = [col for col in display_columns if col in df.columns]
+    df_display = df[final_cols]
+
+    # 5. Column Configuration & Display
+    config = {
+        "customer_id": st.column_config.TextColumn("Customer ID", width="medium"),
+        "customer_name": st.column_config.TextColumn("Customer Name", width="medium"),
+        "renewal_date": st.column_config.DateColumn("Renewal Date", format="MMM, DD YYYY"),
+        "days_to_renewal": st.column_config.NumberColumn("Days to Renewal", format="%d days"),
+        "annual_revenue": st.column_config.NumberColumn("Annual Revenue ($)", format="$%d"),
+        "risk_score": st.column_config.TextColumn("Risk Score")
+    }
+
+    st.subheader("Customer Risk Summary")
+    st.dataframe(df_display, use_container_width=True, column_config=config)
+
+else:
+    st.info("Please upload all required CSV files to run the merge and risk calculation.")
