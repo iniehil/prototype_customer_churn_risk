@@ -18,19 +18,19 @@ st.title("Who is likely to chrun - and when?")
 st.markdown("Upload all required reports.")
 
 # Upload Salesforce report
-sf_file = st.file_uploader("Upload the Salesforce Report")
+sf_file = st.sidebar.file_uploader("Upload the Salesforce Report", type=["csv"])
 df_sf = pd.read_csv(sf_file)
 
 # Upload Omni report
-omni_file = st.file_uploader("Upload the Omni Report")
+omni_file = st.sidebar.file_uploader("Upload the Omni Report", type=["csv"])
 df_omni = pd.read_csv(omni_file)
 
 # Upload Pendo report
-pendo_file = st.file_uploader("Upload the Pendo Report")
+pendo_file = st.sidebar.file_uploader("Upload the Pendo Report", type=["csv"])
 df_pendo = pd.read_csv(pendo_file)
 
 # Upload Zendesk report
-zendesk_file = st.file_uploader("Upload the Zendesk Report")
+zendesk_file = st.sidebar.file_uploader("Upload the Zendesk Report", type=["csv"])
 df_zendesk = pd.read_csv(zendesk_file)
 
 # Merge all input files on account ID
@@ -49,8 +49,6 @@ def generate_risk_score(df):
   return df
 
 # Display dataframe
-df = df.apply(generate_risk_score, axis=1)
-
 config = {
     "customer_id": st.column_config.TextColumn("Customer ID", width="medium"),
     "customer_name": st.column_config.TextColumn("Customer Name", width="medium"),
