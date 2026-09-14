@@ -37,7 +37,7 @@ df_pendo = load_csv_file(pendo_file)
 df_zendesk = load_csv_file(zendesk_file)
 
 # List of loaded DataFrames for quick validation
-all_dfs = [df_sf, df_usage, df_support, df_billing]
+all_dfs = [df_sf, df_omni, df_pendo, df_zendesk]
 loaded_count = sum(1 for df in all_dfs if df is not None)
 
 # Main Page Area
