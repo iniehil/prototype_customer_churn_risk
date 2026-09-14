@@ -36,6 +36,10 @@ df_omni = load_csv_file(omni_file)
 df_pendo = load_csv_file(pendo_file)
 df_zendesk = load_csv_file(zendesk_file)
 
+# List of loaded DataFrames for quick validation
+all_dfs = [df_sf, df_usage, df_support, df_billing]
+loaded_count = sum(1 for df in all_dfs if df is not None)
+
 # Main Page Area
 if loaded_count == 4:
     st.success("All 4 data sources loaded successfully!")
