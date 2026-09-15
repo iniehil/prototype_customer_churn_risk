@@ -11,6 +11,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Title of the app
 st.title("Who is likely to chrun - and when?")
@@ -50,9 +52,9 @@ else:
     # Show status list in main view 
     st.markdown("### Missing Datasets:")
     st.markdown(f"- **Salesforce Data:** {'Ready' if df_sf is not None else 'Pending upload'}")
-    st.markdown(f"- **Usage Data:** {'Ready' if df_omni is not None else 'Pending upload'}")
-    st.markdown(f"- **Support Data:** {'Ready' if df_pendo is not None else 'Pending upload'}")
-    st.markdown(f"- **Billing Data:** {'Ready' if df_zendesk is not None else 'Pending upload'}")
+    st.markdown(f"- **Omni Data:** {'Ready' if df_omni is not None else 'Pending upload'}")
+    st.markdown(f"- **Pendo Data:** {'Ready' if df_pendo is not None else 'Pending upload'}")
+    st.markdown(f"- **Support Data:** {'Ready' if df_zendesk is not None else 'Pending upload'}")
 
 # Ensures that all dataframes exist before processing
 if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
@@ -112,6 +114,64 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
         st.metric("Total Customers", f"{total_cust:,}")
         st.metric("High Risk Customers", f"{high_risk_count:,}", delta=f"{high_risk_count/total_cust:.1%}", delta_color="inverse")
         st.metric("Medium Risk Customers", f"{med_risk_count:,}", delta=f"{med_risk_count/total_cust:.1%}", delta_color="off")
+
+    st.divider()
+
+# -- Total Revenue at Risk
+    st.subheader("By Annual Recurring Revneue (ARR)")
+    
+    # Create logical revenue tiers
+    revenue_bins = [0, 5000, 10000, 50000, 100000, 150000]
+    revenue_labels = ['$0-5k', '$5k-10k', '$10k-50k', '$100k+'] 
+
+    df['revenue_tier'] = pd.cut(df['annual_revenue'], bins=revenue_bins, labels=revenue_labels)
+    
+    # Pivot and AGGREGATE by sum of revenue (ARR)
+    matrix_sums = df.groupby(["revenue_tier", "risk_score"], observed=False)["annual_revenue"].sum()
+    matrix_sums = matrix_sums.unstack(fill_value=0)
+
+    ax = matrix_sums.plot(
+    kind="bar",
+    stacked=True,
+    color=risk_colors,
+    figsize=(11, 6),
+    width=0.7,
+    edgecolor="black",
+    linewidth=0.5,
+    )
+
+    plt.title(
+        "Total Recurring Revenue (ARR) Portfolio at Risk",
+        fontsize=14,
+        weight="bold",
+        pad=15,
+    )
+    plt.xlabel("Customer Revenue Tier", fontsize=11, weight="bold")
+    plt.ylabel("Total Portfolio Value ($)", fontsize=11, weight="bold")
+    plt.xticks(rotation=0)  
+    plt.grid(axis="y", linestyle="--", alpha=0.4)
+
+    # Place legend
+    plt.legend(title="Risk Level", loc="upper left", frameon=True)
+
+    # Add numeric total value labels on top of the bars
+    for rect in ax.patches:
+        height = rect.get_height()
+        if height > 1.0:
+            x = rect.get_x() + rect.get_width() / 2
+            y = rect.get_y() + height / 2
+            ax.text(
+                x,
+                y,
+                f"${height:.1f}M",
+                ha="center",
+                va="center",
+                weight="bold",
+                fontsize=9,
+            )
+
+    plt.tight_layout()
+    st.pyplot()
 
     st.divider()
 
