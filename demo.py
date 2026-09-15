@@ -10,6 +10,7 @@ Original file is located at
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.express as px
 
 # Title of the app
 st.title("Who is likely to chrun - and when?")
@@ -77,7 +78,47 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
     # Assigns 'Low' as default if neither condition above is met
     df['risk_score'] = np.select(conditions, levels, default='Low')
 
-    # 4. Filter only specific columns to display on screen
+    # --- TOP SECTION: Visual Dashboard ---
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+        st.subheader("Risk Score Distribution")
+        
+        # Color palette map for risk tiers
+        color_map = {
+            "High": "#EF553B",    # Red
+            "Medium": "#FECB52",  # Yellow/Orange
+            "Low": "#00CC96"      # Green
+        }
+
+        # Plotly Pie Chart
+        fig = px.pie(
+            df,
+            names='risk_score',
+            title='Percentage of Customers by Risk Level',
+            color='risk_score',
+            color_discrete_map=color_map,
+            hole=0.4  # Creates a clean donut chart style
+        )
+        fig.update_traces(textinfo='percent+label+value', hovertemplate="%{label}: %{value} customers (%{percent})")
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col2:
+        st.subheader("Key Metrics")
+        total_cust = len(df)
+        high_risk_count = len(df[df['risk_score'] == 'High'])
+        med_risk_count = len(df[df['risk_score'] == 'Medium'])
+        
+        st.metric("Total Customers", f"{total_cust:,}")
+        st.metric("High Risk Customers", f"{high_risk_count:,}", delta=f"{high_risk_count/total_cust:.1%}", delta_color="inverse")
+        st.metric("Medium Risk Customers", f"{med_risk_count:,}", delta=f"{med_risk_count/total_cust:.1%}", delta_color="off")
+
+    st.divider()
+
+# --- BOTTOM SECTION: Filtered Data Table ---
+    st.subheader("Customer Details")
+    
+    # Filter only specific columns to display on screen
     display_columns = [
         "customer_id", 
         "customer_name", 
@@ -91,7 +132,7 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
     final_cols = [col for col in display_columns if col in df.columns]
     df_display = df[final_cols]
 
-    # 5. Column Configuration & Display
+    # Column Configuration & Display
     config = {
         "customer_id": st.column_config.TextColumn("Customer ID", width="medium"),
         "customer_name": st.column_config.TextColumn("Customer Name", width="medium"),
@@ -106,3 +147,4 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
 
 else:
     st.info("Please upload all required CSV files to run the merge and risk calculation.")
+
