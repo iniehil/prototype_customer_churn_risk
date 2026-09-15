@@ -121,7 +121,7 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
     st.subheader("By Annual Recurring Revneue (ARR)")
     
     # Create logical revenue tiers
-    revenue_bins = [0, 5000, 10000, 50000, 100000, 150000]
+    revenue_bins = [0, 5000, 10000, 50000, 100000, 150000, 250000]
     revenue_labels = ['$0-5k', '$5k-10k', '$10k-50k', '$100k+'] 
 
     df['revenue_tier'] = pd.cut(df['annual_revenue'], bins=revenue_bins, labels=revenue_labels)
