@@ -43,26 +43,6 @@ loaded_count = sum(1 for df in all_dfs if df is not None)
 # Main Page Area
 if loaded_count == 4:
     st.success("All 4 data sources loaded successfully!")
-
-    # Display preview in main window
-    tab1, tab2, tab3, tab4 = st.tabs(["Salesforce", "Omni", "Pendo", "Support"])
-    
-    with tab1:
-        st.subheader("Salesforce Data Preview")
-        st.dataframe(df_sf.head())
-
-    with tab2:
-        st.subheader("Omni Data Preview")
-        st.dataframe(df_omni.head())
-
-    with tab3:
-        st.subheader("Pendo Data Preview")
-        st.dataframe(df_pendo.head())
-
-    with tab4:
-        st.subheader("Support Ticket Data Preview")
-        st.dataframe(df_zendesk.head())
-
 else:
     st.info(f"Please upload all 4 files using the sidebar to begin analysis. ({loaded_count}/4 loaded)")
 
