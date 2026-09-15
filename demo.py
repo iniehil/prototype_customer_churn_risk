@@ -102,7 +102,7 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
     }
 
     st.subheader("Customer Risk Summary")
-    st.dataframe(df_display, use_container_width=True, column_config=config)
+    st.dataframe(df_display, width="stretch", use_container_width=True, column_config=config)
 
 else:
     st.info("Please upload all required CSV files to run the merge and risk calculation.")
