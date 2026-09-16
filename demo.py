@@ -129,6 +129,9 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
     # Group data
     df_grouped = df.groupby(["revenue_tier", "risk_score"], observed=False)["annual_revenue"].sum().reset_index()
 
+    # Calculate total revenue per tier for top labels
+    totals = df_grouped.groupby("revenue_tier", observed=False)["annual_revenue"].sum().reset_index()
+
     # Create interactive stacked bar chart
     fig = px.bar(
         df_grouped,
@@ -136,18 +139,41 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
         y="annual_revenue",
         color="risk_score",
         title="Total Recurring Revenue (ARR) Portfolio at Risk",
-        labels={"revenue_tier": "Customer Revenue Tier", "annual_revenue": "Total Portfolio Value ($)", "risk_score": "Risk Level"},
-        color_discrete_map={"High": "#EF553B", "Medium": "#FECB52", "Low": "#00CC96"}
+        labels={
+            "revenue_tier": "Customer Revenue Tier",
+            "annual_revenue": "Total Portfolio Value ($)",
+            "risk_score": "Risk Level"
+        },
+        color_discrete_map={
+            "High": "#EF553B",
+            "Medium": "#FECB52",
+            "Low": "#00CC96"
+        }
     )
+
+    # Add total labels on top of each bar
+    for _, row in totals.iterrows():
+        if row["annual_revenue"] > 0:
+            rev = row["annual_revenue"]
+            label_text = f"${rev/1e6:.1f}M" if rev >= 1e6 else f"${rev/1e3:.0f}K" if rev >= 1e3 else f"${rev:,.0f}"
     
+            fig.add_annotation(
+                x=row["revenue_tier"],
+                y=row["annual_revenue"],
+                text=f"<b>{label_text}</b>",
+                showarrow=False,
+                yshift=10, 
+                font=dict(size=12, color="black")
+            )
+
     fig.update_layout(
         barmode="stack",
         xaxis_title="Customer Revenue Tier",
         yaxis_title="Total Portfolio Value ($)",
         yaxis_tickprefix="$",
-        legend_title="Risk Level"
+        legend_title="Risk Level",
+        margin=dict(t=60) 
     )
-    
     st.plotly_chart(fig, use_container_width=True)
     st.divider()
 
