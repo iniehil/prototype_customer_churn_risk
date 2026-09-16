@@ -163,7 +163,7 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
                 text=f"<b>{label_text}</b>",
                 showarrow=False,
                 yshift=10, 
-                font=dict(size=12, color="black")
+                font=dict(size=12, color="white")
             )
 
     fig.update_layout(
