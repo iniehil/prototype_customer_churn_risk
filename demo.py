@@ -121,58 +121,34 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
     st.subheader("By Annual Recurring Revneue (ARR)")
     
     # Create logical revenue tiers
-    revenue_bins = [0, 5000, 10000, 50000, 100000, 150000, 250000]
+    revenue_bins = [0, 5000, 10000, 50000, 100000]
     revenue_labels = ['$0-5k', '$5k-10k', '$10k-50k', '$100k+'] 
 
     df['revenue_tier'] = pd.cut(df['annual_revenue'], bins=revenue_bins, labels=revenue_labels)
     
-    # Pivot and AGGREGATE by sum of revenue (ARR)
-    matrix_sums = df.groupby(["revenue_tier", "risk_score"], observed=False)["annual_revenue"].sum()
-    matrix_sums = matrix_sums.unstack(fill_value=0)
+    # Group data
+    df_grouped = df.groupby(["revenue_tier", "risk_score"], observed=False)["annual_revenue"].sum().reset_index()
 
-    ax = matrix_sums.plot(
-    kind="bar",
-    stacked=True,
-    color=risk_colors,
-    figsize=(11, 6),
-    width=0.7,
-    edgecolor="black",
-    linewidth=0.5,
+    # Create interactive stacked bar chart
+    fig = px.bar(
+        df_grouped,
+        x="revenue_tier",
+        y="annual_revenue",
+        color="risk_score",
+        title="Total Recurring Revenue (ARR) Portfolio at Risk",
+        labels={"revenue_tier": "Customer Revenue Tier", "annual_revenue": "Total Portfolio Value ($)", "risk_score": "Risk Level"},
+        color_discrete_map={"High": "#EF553B", "Medium": "#FECB52", "Low": "#00CC96"}
     )
-
-    plt.title(
-        "Total Recurring Revenue (ARR) Portfolio at Risk",
-        fontsize=14,
-        weight="bold",
-        pad=15,
+    
+    fig.update_layout(
+        barmode="stack",
+        xaxis_title="Customer Revenue Tier",
+        yaxis_title="Total Portfolio Value ($)",
+        yaxis_tickprefix="$",
+        legend_title="Risk Level"
     )
-    plt.xlabel("Customer Revenue Tier", fontsize=11, weight="bold")
-    plt.ylabel("Total Portfolio Value ($)", fontsize=11, weight="bold")
-    plt.xticks(rotation=0)  
-    plt.grid(axis="y", linestyle="--", alpha=0.4)
-
-    # Place legend
-    plt.legend(title="Risk Level", loc="upper left", frameon=True)
-
-    # Add numeric total value labels on top of the bars
-    for rect in ax.patches:
-        height = rect.get_height()
-        if height > 1.0:
-            x = rect.get_x() + rect.get_width() / 2
-            y = rect.get_y() + height / 2
-            ax.text(
-                x,
-                y,
-                f"${height:.1f}M",
-                ha="center",
-                va="center",
-                weight="bold",
-                fontsize=9,
-            )
-
-    plt.tight_layout()
-    st.pyplot()
-
+    
+    st.plotly_chart(fig, use_container_width=True)
     st.divider()
 
 # --- BOTTOM SECTION: Filtered Data Table ---
