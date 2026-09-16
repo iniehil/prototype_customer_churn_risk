@@ -177,6 +177,43 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
     st.plotly_chart(fig, use_container_width=True)
     st.divider()
 
+# -- Accounts at risk by days to renewal
+    st.subheader("By Days to renewal")
+
+    # Create logical renewal tiers
+    renewal_days_bins = [-1, 30, 60, 90, float('inf')]
+    renewal_days_labels = ['0-30d', '31-60d', '61-90d', '90d+']
+
+    # Group data by days_to_renewal
+    df['renewal_tier'] = pd.cut(df['days_to_renewal'], bins=renewal_days_bins, labels=renewal_days_labels)
+
+    # Pivot and aggregate data to get customer counts per cell
+    matrix_data = pd.crosstab(df['renewal_tier'], df['risk_score'])
+
+    # Reorder columns & index logically
+    risk_order = [col for col in ['High', 'Medium', 'Low'] if col in matrix_data.columns]
+    matrix_data = matrix_data[risk_order]
+
+    # Create interactive Heatmap
+    fig = px.imshow(
+        matrix_data.values,
+        x=matrix_data.columns,         # Risk Scores ('High', 'Medium', 'Low')
+        y=matrix_data.index.astype(str),# Renewal Tiers ('0-30d', '31-60d', ...)
+        text_auto=True,               
+        color_continuous_scale="YlOrRd",# Yellow -> Orange -> Red scale
+        aspect="auto",
+        title="Customer Count by Renewal Window & Risk Score"
+    )
+    
+    fig.update_layout(
+        xaxis_title="Risk Level",
+        yaxis_title="Renewal Timeframe",
+        coloraxis_showscale=False     
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    st.divider()
+
 # --- BOTTOM SECTION: Filtered Data Table ---
     st.subheader("Customer Details")
     
