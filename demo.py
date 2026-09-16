@@ -219,12 +219,12 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
     
     # Filter only specific columns to display on screen
     display_columns = [
+        "risk_score",
         "customer_id", 
         "customer_name", 
         "renewal_date", 
         "days_to_renewal", 
-        "annual_revenue", 
-        "risk_score"
+        "annual_revenue"
     ]
     
     # Keep only columns that exist in the merged dataframe
@@ -233,12 +233,12 @@ if all(df is not None for df in [df_sf, df_omni, df_pendo, df_zendesk]):
 
     # Column Configuration & Display
     config = {
+        "risk_score": st.column_config.TextColumn("Risk Score"),
         "customer_id": st.column_config.TextColumn("Customer ID", width="medium"),
         "customer_name": st.column_config.TextColumn("Customer Name", width="medium"),
         "renewal_date": st.column_config.DateColumn("Renewal Date", format="MMM, DD YYYY"),
         "days_to_renewal": st.column_config.NumberColumn("Days to Renewal", format="%d days"),
-        "annual_revenue": st.column_config.NumberColumn("Annual Revenue ($)", format="$%d"),
-        "risk_score": st.column_config.TextColumn("Risk Score")
+        "annual_revenue": st.column_config.NumberColumn("Annual Revenue ($)", format="$%d")
     }
 
     st.subheader("Customer Risk Summary")
